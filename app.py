@@ -80,3 +80,82 @@ def preprocess_image(image):
 
     return img
 
+
+# ==========================
+# Routes
+# ==========================
+
+@app.route("/")
+def home():
+    return render_template("index.html")
+
+
+@app.route("/predict", methods=["POST"])
+def predict():
+
+    try:
+
+        data = request.get_json()
+
+        if not data or "image" not in data:
+            return jsonify({
+                "error": "No image received."
+            }), 400
+
+        image_data = data["image"]
+
+        match = re.search(r"base64,(.*)", image_data)
+
+        if not match:
+            return jsonify({
+                "error": "Invalid image format."
+            }), 400
+
+        image_bytes = base64.b64decode(match.group(1))
+
+        image = Image.open(io.BytesIO(image_bytes))
+
+        processed_image = preprocess_image(image)
+
+        prediction = model.predict(processed_image, verbose=0)[0]
+
+        digit = int(np.argmax(prediction))
+
+        confidence = float(np.max(prediction) * 100)
+
+        # Top 3 predictions
+        top3_idx = prediction.argsort()[-3:][::-1]
+
+        top3 = []
+
+        for i in top3_idx:
+            top3.append({
+                "digit": int(i),
+                "confidence": round(float(prediction[i] * 100), 2)
+            })
+
+        return jsonify({
+
+            "digit": digit,
+
+            "confidence": round(confidence, 2),
+
+            "top3": top3
+
+        })
+
+    except Exception as e:
+
+        return jsonify({
+
+            "error": str(e)
+
+        }), 500
+
+
+# ==========================
+# Run Application
+# ==========================
+
+if __name__ == "__main__":
+    app.run(debug=True)
