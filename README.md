@@ -86,4 +86,4 @@ python app.py
 Open your web browser and navigate to:
 http://127.0.0.1:5000/
 
-Deployed Application URL: 
+Deployed Application URL:  https://huggingface.co/spaces/Mawadah280627/Handwritten-Digit-Recognition
